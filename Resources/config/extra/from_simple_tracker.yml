@@ -1,0 +1,28 @@
+services:
+    cethyworks_cookietracker.from_simple_tracker.request_handler:
+        class: Cethyworks\CookieTrackerBundle\Request\SimpleHandler
+        arguments:
+            - '%cethyworks_cookie_tracker.from_simple_tracker.get_parameter%'
+            - "@request"
+        scope: request
+        public: true
+
+    cethyworks_cookietracker.from_simple_tracker.cookie_factory:
+        class: Cethyworks\CookieTrackerBundle\Cookie\SimpleFactory
+        arguments:
+            - '%cethyworks_cookie_tracker.from_simple_tracker.cookie.name%'
+            - '%cethyworks_cookie_tracker.from_simple_tracker.cookie.expire%'
+            - "@cethyworks_cookietracker.from_simple_tracker.request_handler"
+        scope: request
+        public: true
+
+
+    cethyworks_cookietracker.from_simple_tracker.listener:
+        class: Cethyworks\CookieTrackerBundle\Listener\CookieTrackerListener
+        arguments:
+            - "@cethyworks_cookietracker.from_simple_tracker.request_handler"
+            - "@cethyworks_cookietracker.from_simple_tracker.cookie_factory"
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+        scope: request
+        public: true
