@@ -8,6 +8,10 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Cethyworks\CookieTrackerBundle\Request\HandlerInterface as RequestHandler;
 use Cethyworks\CookieTrackerBundle\Cookie\FactoryInterface as CookieFactory;
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Cethyworks\CookieTrackerBundle\CookieTrackerEvents;
+use Cethyworks\CookieTrackerBundle\Event\CookieTrackerEvent;
+
 class CookieTrackerListener
 {
     /**
@@ -20,28 +24,40 @@ class CookieTrackerListener
      */
     protected $cookieFactory;
 
-    public function __construct(RequestHandler $requestHandler, CookieFactory $cookieFactory)
+    /**
+     * @var EventDispatcherInterface
+     */
+    protected $eventDispatcher;
+
+    public function __construct(RequestHandler $requestHandler, CookieFactory $cookieFactory, EventDispatcherInterface $eventDispatcher)
     {
         $this->requestHandler = $requestHandler;
         $this->cookieFactory  = $cookieFactory;
+
+        $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function onKernelResponse(FilterResponseEvent $event)
+    public function onKernelResponse(FilterResponseEvent $originEvent)
     {
-        if (HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType())
+        if (HttpKernelInterface::MASTER_REQUEST !== $originEvent->getRequestType())
         {
             return;
         }
 
-        $request = $event->getRequest();
-        $response = $event->getResponse();
+        $request = $originEvent->getRequest();
+        $response = $originEvent->getResponse();
 
         if(! $this->requestHandler->isEligible($request))
         {
             return;
         }
 
-        $response->headers->setCookie($this->cookieFactory->generate($request));
-        $event->setResponse($response);
+        $cookie = $this->cookieFactory->generate($request);
+
+        $event = new CookieTrackerEvent($cookie);
+        $this->eventDispatcher->dispatch(CookieTrackerEvents::VISIT, $event);
+
+        $response->headers->setCookie($cookie);
+        $originEvent->setResponse($response);
     }
 }

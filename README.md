@@ -7,6 +7,7 @@ This bundle allow you to simply put a cookie on your users based on the request 
 - Customizable Cookie Factory
 - Customizable Request Handler
 - Comes with "ready-to-go" simple "GET parameter" behavior (see 3. Simple use-case)
+- Now throw an Event ! (CookieTrackerEvents::VISIT)
 
 ### Todo:
 - travis CI configuration
@@ -75,3 +76,4 @@ cethyworks_cookie_tracker:
 ```
 
 Call any url of your website with an added GET parameter "from" and the listener will tie to the response a cookie named "from" with the value of the get parameter and a expire value of 60 days.
+
