@@ -8,7 +8,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Cethyworks\CookieTrackerBundle\Request\HandlerInterface as RequestHandler;
 use Cethyworks\CookieTrackerBundle\Cookie\FactoryInterface as CookieFactory;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Cethyworks\CookieTrackerBundle\Event\EventHandlerInterface;
 use Cethyworks\CookieTrackerBundle\CookieTrackerEvents;
 use Cethyworks\CookieTrackerBundle\Event\CookieTrackerEvent;
 
@@ -25,16 +25,16 @@ class CookieTrackerListener
     protected $cookieFactory;
 
     /**
-     * @var EventDispatcherInterface
+     * @var EventHandlerInterface
      */
-    protected $eventDispatcher;
+    protected $eventHanlder;
 
-    public function __construct(RequestHandler $requestHandler, CookieFactory $cookieFactory, EventDispatcherInterface $eventDispatcher)
+    public function __construct(RequestHandler $requestHandler, CookieFactory $cookieFactory, EventHandlerInterface $eventHandler = null)
     {
         $this->requestHandler = $requestHandler;
         $this->cookieFactory  = $cookieFactory;
 
-        $this->eventDispatcher = $eventDispatcher;
+        $this->eventHanlder = $eventHandler;
     }
 
     public function onKernelResponse(FilterResponseEvent $originEvent)
@@ -54,8 +54,10 @@ class CookieTrackerListener
 
         $cookie = $this->cookieFactory->generate($request);
 
-        $event = new CookieTrackerEvent($cookie);
-        $this->eventDispatcher->dispatch(CookieTrackerEvents::VISIT, $event);
+        if($this->eventHanlder instanceof EventHandlerInterface)
+        {
+            $this->eventHanlder->throwEvent($cookie);
+        }
 
         $response->headers->setCookie($cookie);
         $originEvent->setResponse($response);

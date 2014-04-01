@@ -16,13 +16,17 @@ services:
         scope: request
         public: true
 
+    cethyworks_cookietracker.from_simple_tracker.event_handler:
+        class: Cethyworks\CookieTrackerBundle\Event\EventHandler
+        arguments:
+            - "@event_dispatcher"
 
     cethyworks_cookietracker.from_simple_tracker.listener:
         class: Cethyworks\CookieTrackerBundle\Listener\CookieTrackerListener
         arguments:
             - "@cethyworks_cookietracker.from_simple_tracker.request_handler"
             - "@cethyworks_cookietracker.from_simple_tracker.cookie_factory"
-            - "@event_dispatcher"
+            - "@cethyworks_cookietracker.from_simple_tracker.event_handler"
         tags:
             - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
         scope: request
